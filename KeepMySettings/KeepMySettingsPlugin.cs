@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace KeepMySettings;
 
+[BepInDependency("com.rune580.riskofoptions")]
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 public class KeepMySettingsPlugin : BaseUnityPlugin
 {
