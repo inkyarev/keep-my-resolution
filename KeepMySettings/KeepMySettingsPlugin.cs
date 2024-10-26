@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
@@ -17,7 +18,7 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
     private const string PluginGUID = PluginAuthor + "." + PluginName;
     private const string PluginAuthor = "InkyaRev";
     private const string PluginName = "KeepMySettings";
-    private const string PluginVersion = "1.2.0";
+    private const string PluginVersion = "1.2.1";
     
     // ReSharper disable memberCanBePrivate.Global
     public static ConfigEntry<string> PreferredResolution;
@@ -25,7 +26,9 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
     public static ConfigEntry<bool> PreferredDamageNumbers;
     public static ConfigEntry<bool> PreferredExpAndMoneyEffects;
     // ReSharper restore memberCanBePrivate.Global
-    private static IEnumerable<string> ResolutionsList => Screen.resolutions.Select(ResolutionToString); // this looks bad but trust me it does not affect performance
+
+    private static readonly IEnumerable<string> Cfg = File.ReadAllLines(Path.Combine(Paths.GameRootPath, Paths.ProcessName + "_Data", "Config", "config.cfg"));
+    private static IEnumerable<string> ResolutionsList => Screen.resolutions.Select(res => res.ToString()); // this looks bad but trust me it does not affect performance
 
     public void Awake()
     {
@@ -33,17 +36,17 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
 
         var resolutionsString = ResolutionsList.Aggregate(string.Empty, (str, res) => str + $"\n{res}");
 
-        #region Gameplay
-        PreferredDamageNumbers = Config.Bind("Gameplay", "Preferred Damage Numbers", true);
+        #region Gameplay config
+        PreferredDamageNumbers = Config.Bind("Gameplay", "Preferred Damage Numbers", FindValueInCfg("enable_damage_numbers").ToBool());
         ModSettingsManager.AddOption(new CheckBoxOption(PreferredDamageNumbers));
-        PreferredExpAndMoneyEffects = Config.Bind("Gameplay", "Preferred Exp and Money Effects", true);
+        PreferredExpAndMoneyEffects = Config.Bind("Gameplay", "Preferred Exp and Money Effects", FindValueInCfg("exp_and_money_effects").ToBool());
         ModSettingsManager.AddOption(new CheckBoxOption(PreferredExpAndMoneyEffects));
         #endregion
 
-        #region Video
-        PreferredResolution = Config.Bind("Video", "Preferred Resolution", ResolutionToString(Screen.resolutions.Last()), $"Available resolutions: {resolutionsString}");
+        #region Video config
+        PreferredResolution = Config.Bind("Video", "Preferred Resolution", FindValueInCfg("resolution"), $"Available resolutions: {resolutionsString}");
         ModSettingsManager.AddOption(new StringInputFieldOption(PreferredResolution));
-        PreferredFPSLimit = Config.Bind("Video", "Preferred FPS Limit", Screen.resolutions.Last().refreshRate * 2, "Can be any positive number.");
+        PreferredFPSLimit = Config.Bind("Video", "Preferred FPS Limit", FindValueInCfg("fps_max").ToInt32(), "Can be any positive number.");
         ModSettingsManager.AddOption(new IntFieldOption(PreferredFPSLimit, new IntFieldConfig { Min = 0 }));
         #endregion
         
@@ -53,16 +56,16 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
             switch (self.name)
             {
                 #region Gameplay
-                case "enable_damage_numbers" when ZeroOneStringToBool(self.GetString()) == PreferredDamageNumbers.Value:
+                case "enable_damage_numbers" when self.GetString().ToBool() == PreferredDamageNumbers.Value:
                     return;
                 case "enable_damage_numbers":
-                    self.SetString(BoolToZeroOneString(PreferredDamageNumbers.Value));
+                    self.SetString(PreferredDamageNumbers.Value.ToCfgString());
                     return;
                 
-                case "exp_and_money_effects" when ZeroOneStringToBool(self.GetString()) == PreferredExpAndMoneyEffects.Value:
+                case "exp_and_money_effects" when self.GetString().ToBool() == PreferredExpAndMoneyEffects.Value:
                     return;
                 case "exp_and_money_effects":
-                    self.SetString(BoolToZeroOneString(PreferredExpAndMoneyEffects.Value));
+                    self.SetString(PreferredExpAndMoneyEffects.Value.ToCfgString());
                     return;
                 #endregion
 
@@ -74,7 +77,7 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
                     self.SetString(PreferredResolution.Value);
                     return;
                 
-                case "fps_max" when Convert.ToInt32(self.GetString()) == PreferredFPSLimit.Value:
+                case "fps_max" when self.GetString().ToInt32() == PreferredFPSLimit.Value:
                     return;
                 case "fps_max":
                     self.SetString(PreferredFPSLimit.Value.ToString());
@@ -86,21 +89,6 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         };
     }
 
-    private static bool ZeroOneStringToBool(string str)
-    {
-        return Convert.ToBoolean(Convert.ToInt32(str));
-    }
-    
-    private static string BoolToZeroOneString(bool boolean)
-    {
-        return Convert.ToInt32(boolean).ToString();
-    }
-
-    private static string ResolutionToString(Resolution resolution)
-    {
-        return $"{resolution.width}x{resolution.height}x{resolution.refreshRate}"; // <--- he's not here anymore
-    }
-
     private void FixedUpdate()
     {
         if(RoR2.Console.instance is null) return;
@@ -110,8 +98,15 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         var fpsMax = RoR2.Console.instance.FindConVar("fps_max");
         fpsMax?.AttemptSetString(PreferredFPSLimit.Value.ToString());
         var dmgNums = RoR2.Console.instance.FindConVar("enable_damage_numbers");
-        dmgNums?.AttemptSetString(BoolToZeroOneString(PreferredDamageNumbers.Value));
+        dmgNums?.AttemptSetString(PreferredDamageNumbers.Value.ToCfgString());
         var capitalism = RoR2.Console.instance.FindConVar("exp_and_money_effects");
-        capitalism?.AttemptSetString(BoolToZeroOneString(PreferredExpAndMoneyEffects.Value));
+        capitalism?.AttemptSetString(PreferredExpAndMoneyEffects.Value.ToCfgString());
+    }
+
+    private static string FindValueInCfg(string varName)
+    {
+        return Cfg.Where(line => line.StartsWith(varName))
+            .Select(str => str.Replace($"{varName} ", string.Empty).TrimEnd(';'))
+            .First();
     }
 }
