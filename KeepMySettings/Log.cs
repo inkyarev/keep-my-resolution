@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace KeepMyResolution;
+namespace KeepMySettings;
 
 internal static class Log
 {
