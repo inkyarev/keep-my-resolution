@@ -98,7 +98,7 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
 
     private static string ResolutionToString(Resolution resolution)
     {
-        return $"{resolution.width}x{resolution.height}x{resolution.refreshRate}".Trim(); // <--- whyyyy is this guy here
+        return $"{resolution.width}x{resolution.height}x{resolution.refreshRate}"; // <--- he's not here anymore
     }
 
     private void FixedUpdate()
