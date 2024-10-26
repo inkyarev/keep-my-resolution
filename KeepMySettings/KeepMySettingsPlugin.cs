@@ -32,7 +32,7 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
 
         PreferredResolution = Config.Bind("Video", "Preferred Resolution", ResolutionToString(Screen.resolutions.Last()), $"Available resolutions: {resolutionsString}");
         ModSettingsManager.AddOption(new StringInputFieldOption(PreferredResolution));
-        PreferredFPSLimit = Config.Bind("Video", "Preferred FPS Limit", Screen.resolutions.Last().refreshRate, "Can be any positive number.");
+        PreferredFPSLimit = Config.Bind("Video", "Preferred FPS Limit", Screen.resolutions.Last().refreshRate * 2, "Can be any positive number.");
         ModSettingsManager.AddOption(new IntFieldOption(PreferredFPSLimit, new IntFieldConfig { Min = 0 }));
         
         On.RoR2.ConVar.BaseConVar.AttemptSetString += (orig, self, value) =>
