@@ -7,6 +7,10 @@ Currently, it supports:
 - Gameplay
   - Keeping Damage Numbers
   - Keeping Exp and Money Effects
+- Audio
+  - Keeping Master Volume
+  - Keeping SFX Volume
+  - Keeping Music Volume
 - Video
   - Keeping Resolution
   - Keeping FPS Limit
