@@ -5,7 +5,7 @@ namespace KeepMySettings;
 
 public static class ConvertExtensions
 {
-    public static string ToString(this Resolution resolution)
+    public static string ToCfgString(this Resolution resolution)
     {
         return $"{resolution.width}x{resolution.height}x{resolution.refreshRate}";
     }
@@ -32,5 +32,9 @@ public static class ConvertExtensions
     public static int ToInt32(this string str)
     {
         return Convert.ToInt32(str);
+    }
+    public static float ToSingle(this string str)
+    {
+        return Convert.ToSingle(str);
     }
 }
