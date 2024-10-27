@@ -19,7 +19,7 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
     private const string PluginGUID = PluginAuthor + "." + PluginName;
     private const string PluginAuthor = "InkyaRev";
     private const string PluginName = "KeepMySettings";
-    private const string PluginVersion = "1.2.1";
+    private const string PluginVersion = "1.3.1";
     
     // ReSharper disable memberCanBePrivate.Global
     public static ConfigEntry<bool> PreferredDamageNumbers;
