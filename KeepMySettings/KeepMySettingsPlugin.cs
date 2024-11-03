@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using BepInEx;
 using BepInEx.Configuration;
+using JetBrains.Annotations;
 using RiskOfOptions;
 using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
@@ -43,25 +44,32 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         var resolutionsString = ResolutionsList.Aggregate(string.Empty, (str, res) => str + $"\n{res}");
 
         #region Gameplay config
-        PreferredDamageNumbers = Config.Bind("Gameplay", "Preferred Damage Numbers", FindValueInCfg("enable_damage_numbers").ToBool());
+        var dmgNumsCfg = FindValueInCfg("enable_damage_numbers") ?? "1";
+        PreferredDamageNumbers = Config.Bind("Gameplay", "Preferred Damage Numbers", dmgNumsCfg.ToBool());
         ModSettingsManager.AddOption(new CheckBoxOption(PreferredDamageNumbers));
-        PreferredExpAndMoneyEffects = Config.Bind("Gameplay", "Preferred Exp and Money Effects", FindValueInCfg("exp_and_money_effects").ToBool());
+        var capitalismCfg = FindValueInCfg("exp_and_money_effects") ?? "1";
+        PreferredExpAndMoneyEffects = Config.Bind("Gameplay", "Preferred Exp and Money Effects", capitalismCfg.ToBool());
         ModSettingsManager.AddOption(new CheckBoxOption(PreferredExpAndMoneyEffects));
         #endregion
 
         #region Audio config
-        PreferredMasterVolume = Config.Bind("Audio", "Preferred Master Volume", FindValueInCfg("volume_master").ToSingle());
+        var masterCfg = FindValueInCfg("volume_master") ?? "100";
+        PreferredMasterVolume = Config.Bind("Audio", "Preferred Master Volume", masterCfg.ToSingle());
         ModSettingsManager.AddOption(new SliderOption(PreferredMasterVolume, new SliderConfig { FormatString = "{0:N0}%" }));
-        PreferredSFXVolume = Config.Bind("Audio", "Preferred SFX Volume", FindValueInCfg("volume_sfx").ToSingle());
+        var sfxCfg = FindValueInCfg("volume_sfx") ?? "100";
+        PreferredSFXVolume = Config.Bind("Audio", "Preferred SFX Volume", sfxCfg.ToSingle());
         ModSettingsManager.AddOption(new SliderOption(PreferredSFXVolume, new SliderConfig { FormatString = "{0:N0}%" }));
-        PreferredMusicVolume = Config.Bind("Audio", "Preferred Music Volume", FindValueInCfg("parent_volume_music").ToSingle());
+        var musicCfg = FindValueInCfg("parent_volume_music") ?? "100";
+        PreferredMusicVolume = Config.Bind("Audio", "Preferred Music Volume", musicCfg.ToSingle());
         ModSettingsManager.AddOption(new SliderOption(PreferredMusicVolume, new SliderConfig { FormatString = "{0:N0}%" }));
         #endregion
 
         #region Video config
-        PreferredResolution = Config.Bind("Video", "Preferred Resolution", FindValueInCfg("resolution"), $"Available resolutions: {resolutionsString}");
+        var resCfg = FindValueInCfg("resolution") ?? Screen.currentResolution.ToCfgString();
+        PreferredResolution = Config.Bind("Video", "Preferred Resolution", resCfg, $"Available resolutions: {resolutionsString}");
         ModSettingsManager.AddOption(new StringInputFieldOption(PreferredResolution));
-        PreferredFPSLimit = Config.Bind("Video", "Preferred FPS Limit", FindValueInCfg("fps_max").ToInt32(), "Can be any positive number.");
+        var fpsMaxCfg = FindValueInCfg("fps_max") ?? (Screen.currentResolution.refreshRate * 2).ToString();
+        PreferredFPSLimit = Config.Bind("Video", "Preferred FPS Limit", fpsMaxCfg.ToInt32(), "Can be any positive number.");
         ModSettingsManager.AddOption(new IntFieldOption(PreferredFPSLimit, new IntFieldConfig { Min = 0 }));
         #endregion
         
@@ -156,11 +164,12 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         #endregion
     }
 
+    [CanBeNull]
     private static string FindValueInCfg(string varName)
     {
         var varNameWithSpace = $"{varName} ";
         return Cfg.Where(line => line.StartsWith(varNameWithSpace))
             .Select(str => str.Replace(varNameWithSpace, string.Empty).TrimEnd(';'))
-            .First();
+            .FirstOrDefault();
     }
 }
