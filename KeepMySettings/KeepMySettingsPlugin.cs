@@ -23,13 +23,16 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
     private const string PluginVersion = "1.3.1";
     
     // ReSharper disable memberCanBePrivate.Global
+    public static ConfigEntry<bool> GameplayModuleEnabled;
     public static ConfigEntry<bool> PreferredDamageNumbers;
     public static ConfigEntry<bool> PreferredExpAndMoneyEffects;
 
+    public static ConfigEntry<bool> AudioModuleEnabled;
     public static ConfigEntry<float> PreferredMasterVolume;
     public static ConfigEntry<float> PreferredSFXVolume;
     public static ConfigEntry<float> PreferredMusicVolume;
     
+    public static ConfigEntry<bool> VideoModuleEnabled;
     public static ConfigEntry<string> PreferredResolution;
     public static ConfigEntry<int> PreferredFPSLimit;
     // ReSharper restore memberCanBePrivate.Global
@@ -44,6 +47,8 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         var resolutionsString = ResolutionsList.Aggregate(string.Empty, (str, res) => str + $"\n{res}");
 
         #region Gameplay config
+        GameplayModuleEnabled = Config.Bind("Gameplay", "Enabled", false, "Enables gameplay module.");
+        ModSettingsManager.AddOption(new CheckBoxOption(GameplayModuleEnabled));
         var dmgNumsCfg = FindValueInCfg("enable_damage_numbers") ?? "1";
         PreferredDamageNumbers = Config.Bind("Gameplay", "Preferred Damage Numbers", dmgNumsCfg.ToBool());
         ModSettingsManager.AddOption(new CheckBoxOption(PreferredDamageNumbers));
@@ -53,6 +58,8 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         #endregion
 
         #region Audio config
+        AudioModuleEnabled = Config.Bind("Audio", "Enabled", false, "Enables audio module.");
+        ModSettingsManager.AddOption(new CheckBoxOption(AudioModuleEnabled));
         var masterCfg = FindValueInCfg("volume_master") ?? "100";
         PreferredMasterVolume = Config.Bind("Audio", "Preferred Master Volume", masterCfg.ToSingle());
         ModSettingsManager.AddOption(new SliderOption(PreferredMasterVolume, new SliderConfig { FormatString = "{0:N0}%" }));
@@ -65,6 +72,8 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         #endregion
 
         #region Video config
+        VideoModuleEnabled = Config.Bind("Video", "Enabled", false, "Enables video module.");
+        ModSettingsManager.AddOption(new CheckBoxOption(VideoModuleEnabled));
         var resCfg = FindValueInCfg("resolution") ?? Screen.currentResolution.ToCfgString();
         PreferredResolution = Config.Bind("Video", "Preferred Resolution", resCfg, $"Available resolutions: {resolutionsString}");
         ModSettingsManager.AddOption(new StringInputFieldOption(PreferredResolution));
@@ -79,6 +88,10 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
             switch (self.name)
             {
                 #region Gameplay
+                case "enable_damage_numbers" when !GameplayModuleEnabled.Value:
+                case "exp_and_money_effects" when !GameplayModuleEnabled.Value:
+                    break;
+                
                 case "enable_damage_numbers" when self.GetString().ToBool() == PreferredDamageNumbers.Value:
                     return;
                 case "enable_damage_numbers":
@@ -93,6 +106,11 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
                 #endregion
 
                 #region Audio
+                case "volume_master" when !AudioModuleEnabled.Value:
+                case "volume_sfx" when !AudioModuleEnabled.Value:
+                case "parent_volume_music" when !AudioModuleEnabled.Value:
+                    break;
+                
                 case "volume_master" when Mathf.Approximately(self.GetString().ToSingle(), PreferredMasterVolume.Value):
                     return;
                 case "volume_master":
@@ -113,6 +131,10 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
                 #endregion
 
                 #region Video
+                case "resolution" when !VideoModuleEnabled.Value:
+                case "fps_max" when !VideoModuleEnabled.Value:
+                    break;
+                
                 case "resolution" when self.GetString() == PreferredResolution.Value:
                 case "resolution" when !ResolutionsList.Contains(PreferredResolution.Value):
                     return;
@@ -137,30 +159,39 @@ public class KeepMySettingsPlugin : BaseUnityPlugin
         if(RoR2.Console.instance is null) return;
 
         #region Gameplay
-        var dmgNums = RoR2.Console.instance.FindConVar("enable_damage_numbers");
-        dmgNums?.AttemptSetString(PreferredDamageNumbers.Value.ToCfgString());
+        if (GameplayModuleEnabled.Value)
+        {
+            var dmgNums = RoR2.Console.instance.FindConVar("enable_damage_numbers");
+            dmgNums?.AttemptSetString(PreferredDamageNumbers.Value.ToCfgString());
         
-        var capitalism = RoR2.Console.instance.FindConVar("exp_and_money_effects");
-        capitalism?.AttemptSetString(PreferredExpAndMoneyEffects.Value.ToCfgString());
+            var capitalism = RoR2.Console.instance.FindConVar("exp_and_money_effects");
+            capitalism?.AttemptSetString(PreferredExpAndMoneyEffects.Value.ToCfgString());
+        }
         #endregion
 
         #region Audio
-        var master = RoR2.Console.instance.FindConVar("volume_master");
-        master?.AttemptSetString(PreferredResolution.Value);
+        if (AudioModuleEnabled.Value)
+        {
+            var master = RoR2.Console.instance.FindConVar("volume_master");
+            master?.AttemptSetString(PreferredResolution.Value);
         
-        var sfx = RoR2.Console.instance.FindConVar("volume_sfx");
-        sfx?.AttemptSetString(PreferredResolution.Value);
+            var sfx = RoR2.Console.instance.FindConVar("volume_sfx");
+            sfx?.AttemptSetString(PreferredResolution.Value);
         
-        var music = RoR2.Console.instance.FindConVar("parent_volume_music");
-        music?.AttemptSetString(PreferredResolution.Value);
+            var music = RoR2.Console.instance.FindConVar("parent_volume_music");
+            music?.AttemptSetString(PreferredResolution.Value);
+        }
         #endregion
         
         #region Video
-        var res = RoR2.Console.instance.FindConVar("resolution");
-        res?.AttemptSetString(PreferredResolution.Value);
+        if (VideoModuleEnabled.Value)
+        {
+            var res = RoR2.Console.instance.FindConVar("resolution");
+            res?.AttemptSetString(PreferredResolution.Value);
         
-        var fpsMax = RoR2.Console.instance.FindConVar("fps_max");
-        fpsMax?.AttemptSetString(PreferredFPSLimit.Value.ToString());
+            var fpsMax = RoR2.Console.instance.FindConVar("fps_max");
+            fpsMax?.AttemptSetString(PreferredFPSLimit.Value.ToString());
+        }
         #endregion
     }
 
