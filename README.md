@@ -1,8 +1,5 @@
 # Keep My Settings
 
-## Modules update!
-**Now everything is disabled by default, make sure to enable needed modules in the settings.**
-
 ## Whatawhy
 This is a mod for RoR2 that prevents the game from changing your settings, leaving you in full control. 
 
