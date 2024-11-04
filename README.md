@@ -1,5 +1,8 @@
 # Keep My Settings
 
+## Modules update!
+**Now everything is disabled by default, make sure to enable needed modules in the settings.**
+
 ## Whatawhy
 This is a mod for RoR2 that prevents the game from changing your settings, leaving you in full control. 
 
@@ -18,4 +21,4 @@ Currently, it supports:
 I made this for myself, 'cause i'm tired of the game randomly resetting the resolution to 1080p. My pc is potato, it can't run that!!!!
 
 ## Setup
-Install the mod, run the game, then go to Mod Settings in the game's settings and find this mod. Then you can change the supported settings to what you desire. The description provides necessary information for filling them out. Alternatively you can change the config found at BepInEx/config/InkyaRev.KeepMySettings.cfg.
+Install the mod, run the game, then go to Mod Settings in the game's settings and find this mod. Then you can enable needed modules and change the supported settings to what you desire. The description provides necessary information for filling them out. Alternatively you can change the config found at BepInEx/config/InkyaRev.KeepMySettings.cfg.
